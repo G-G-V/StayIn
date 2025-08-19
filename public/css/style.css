@@ -1,0 +1,107 @@
+body {
+  font-family: "Plus Jakarta Sans", sans-serif !important;
+}
+
+
+/* Navbar */
+.navbar {    
+    /* copied this class name from the navbar.ejs file */
+    height: 5rem;
+    /* just the sticky-top class of Bootstrap is making the scrollable content overlap with navbar when scrolled, so just add a background-color key in css to the navbar class so that it is solved */
+    background-color: white;
+}
+
+/* .fa-compass {
+    color: #fe424d;
+    font-size: 2rem;
+} */
+.fa-mountain-sun {
+    color: #fe424d;
+    font-size: 2rem;
+}
+
+.nav-link {
+    color: #222222 !important;
+    /* Bootstrap has its own stylings, sometimes to override it and customize our stylings, we can use !important in our css. */
+
+}
+
+
+/* Footer */
+.f-info-links a {
+    text-decoration: none;
+    color: #222222;
+}
+
+.f-info-links a:hover{
+    text-decoration: underline;
+}
+
+.f-info-links, 
+.f-info-socials,
+.f-info-brand {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.f-info-socials i {
+    font-size: 1.2rem;
+    margin-right: 1rem;
+}
+
+.f-info {
+    text-align: center;
+    height: 8rem;
+    background-color: #ebebeb;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: space-evenly;
+}
+
+
+/* Cards */
+.card {
+    border: none !important;
+    margin-bottom: 2rem;
+}
+
+.card-img-top {
+    border-radius: 1rem !important;
+    width: 100% !important;
+    object-fit: cover !important;
+}
+
+.card-body {
+    padding: 0 !important;
+}
+
+.card-text p {
+    font-weight: 400 !important;
+}
+
+/* (google fonts)
+/* // <weight>: Use a value from 200 to 800
+// <uniquifier>: Use a unique and descriptive class name *
+.plus-jakarta-sans-<uniquifier> {
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: <weight>;
+  font-style: normal;
+} */
+
+.listing-link {
+    text-decoration: none;
+}
+
+/* Card Overlay effect */
+.card-img-overlay {
+    opacity: 0;
+}
+
+.card-img-overlay:hover {
+    opacity: 0.2;
+    background-color: white;
+}
