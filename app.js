@@ -57,7 +57,7 @@ app.get("/listings/:id", async (req, res) => {
 app.post("/listings", async (req, res) => {
     // let { title, description, image, price, country, location } = req.body;
     // in the html form's name attributes of the fields, we can send the key-value pair tied to an object in the form object[key] in the name attribute which will be in the body of request as an object, making the accessing/destructuring syntax here easier.
-    //let listing = req.body.listing;
+    // let listing = req.body.listing;
     const newListing = new Listing(req.body.listing);
     await newListing.save();
     res.redirect("/listings");
