@@ -7,7 +7,9 @@ const methodOverride = require("method-override");
 const ejsMate = require("ejs-mate");
 const wrapAsync = require("./utils/wrapAsync.js");
 const ExpressError = require("./utils/ExpressError.js");
-const { listingSchema } = require("./schema.js");
+const { listingSchema, reviewSchema } = require("./schema.js");
+const Review = require("./models/review.js");
+const { reverse } = require("dns");
 
 const MONGO_URL = "mongodb://127.0.0.1:27017/stayin";
 
@@ -49,6 +51,16 @@ const validateListing = (req, res, next) => {
     }
 }
 
+const validateReview = (req, res, next) => {
+    let { error } = reviewSchema.validate(req.body);
+    if (error) {
+        let errMsg = error.details.map((el) => el.message).join(",");
+        throw new ExpressError(400, errMsg);
+    } else {
+        next();
+    }
+}
+
 
 //Index Route
 app.get("/listings", wrapAsync(async (req, res) => {
@@ -64,7 +76,7 @@ app.get("/listings/new", (req, res) => {
 //Show Route
 app.get("/listings/:id", wrapAsync(async (req, res) => {
     let { id } = req.params;
-    let listing = await Listing.findById(id);
+    let listing = await Listing.findById(id).populate("reviews");                                      // previously(before reviews) : let listing = await Listing.findById(id);
     res.render("listings/show.ejs", { listing });
 }));
  
@@ -121,6 +133,32 @@ app.delete("/listings/:id", wrapAsync(async (req, res) => {
     res.redirect("/listings");
 }));
 
+
+//Reviews
+//Post Route
+app.post("/listings/:id/reviews", validateReview, wrapAsync(async(req, res) => {
+    let listing = await Listing.findById(req.params.id);
+    let newReview = new Review(req.body.review);
+
+    listing.reviews.push(newReview);
+
+    await newReview.save();
+    await listing.save();
+
+    res.redirect(`/listings/${listing._id}`); 
+}));                                                           // In Server-side validation, the hoppscotch body is sent empty and we get the message on screen(html section) as ' "review" is required ', so the body is empty and hence the error. But if we send the body as { "review" : {} }, then we get the message as ' "rating" is required, "comment" is required ' since the review object is present but the keys inside it are missing. So the validation is working perfectly fine. And when urlencoded form is sent from the form through hoppscotch, the req.body has the review object with the keys and values. So, we will have to send like this in hoppscotch to test the review post route: review[rating] : 4 and review[comment] : "Great Place!" in the body section of hoppscotch with x-www-form-urlencoded selected.
+
+//Delete Review Route
+app.delete("/listings/:id/reviews/:reviewId", wrapAsync(async (req, res) => {
+    let { id, reviewId } = req.params;
+
+    await Listing.findByIdAndUpdate(id, { $pull: { reviews: reviewId } });         // $pull operator removes from an existing array all instances of a value or values that match a specified condition. Here we are removing the reviewId from the reviews array in the listing document.
+    await Review.findByIdAndDelete(reviewId);
+    
+    res.redirect(`/listings/${id}`);
+}));
+
+
 // app.get("/testListing", (req, res) => {
 //     let sampleListing = new Listing({
 //         title: "New Villa",
@@ -146,7 +184,6 @@ app.all("*some", (req, res, next) => {
 app.use((err, req, res, next) => {
     let { statusCode = 500, message = "Something went wrong!" } = err;
     res.status(statusCode).render("error.ejs", { message });
-    //res.status(statusCode).send(message);
     // res.send("Something went wrong!");
 });
 
