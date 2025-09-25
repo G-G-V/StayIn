@@ -76,7 +76,7 @@ app.get("/listings/new", (req, res) => {
 //Show Route
 app.get("/listings/:id", wrapAsync(async (req, res) => {
     let { id } = req.params;
-    let listing = await Listing.findById(id);
+    let listing = await Listing.findById(id).populate("reviews");                                      // previously(before reviews) : let listing = await Listing.findById(id);
     res.render("listings/show.ejs", { listing });
 }));
  
