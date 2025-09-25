@@ -7,7 +7,9 @@ const methodOverride = require("method-override");
 const ejsMate = require("ejs-mate");
 const wrapAsync = require("./utils/wrapAsync.js");
 const ExpressError = require("./utils/ExpressError.js");
-const { listingSchema } = require("./schema.js");
+const { listingSchema, reviewSchema } = require("./schema.js");
+const Review = require("./models/review.js");
+const { reverse } = require("dns");
 
 const MONGO_URL = "mongodb://127.0.0.1:27017/stayin";
 
@@ -41,6 +43,16 @@ app.get("/", (req, res) => {
 
 const validateListing = (req, res, next) => {
     let { error } = listingSchema.validate(req.body);
+    if (error) {
+        let errMsg = error.details.map((el) => el.message).join(",");
+        throw new ExpressError(400, errMsg);
+    } else {
+        next();
+    }
+}
+
+const validateReview = (req, res, next) => {
+    let { error } = reviewSchema.validate(req.body);
     if (error) {
         let errMsg = error.details.map((el) => el.message).join(",");
         throw new ExpressError(400, errMsg);
@@ -120,6 +132,22 @@ app.delete("/listings/:id", wrapAsync(async (req, res) => {
     await Listing.findByIdAndDelete(id);
     res.redirect("/listings");
 }));
+
+
+//Reviews
+//Post Route
+app.post("/listings/:id/reviews", validateReview, wrapAsync(async(req, res) => {
+    let listing = await Listing.findById(req.params.id);
+    let newReview = new Review(req.body.review);
+
+    listing.reviews.push(newReview);
+
+    await newReview.save();
+    await listing.save();
+
+    res.redirect(`/listings/${listing._id}`); 
+}));                                                           // In Server-side validation, the hoppscotch body is sent empty and we get the message on screen(html section) as ' "review" is required ', so the body is empty and hence the error. But if we send the body as { "review" : {} }, then we get the message as ' "rating" is required, "comment" is required ' since the review object is present but the keys inside it are missing. So the validation is working perfectly fine. And when urlencoded form is sent from the form through hoppscotch, the req.body has the review object with the keys and values. So, we will have to send like this in hoppscotch to test the review post route: review[rating] : 4 and review[comment] : "Great Place!" in the body section of hoppscotch with x-www-form-urlencoded selected.
+
 
 // app.get("/testListing", (req, res) => {
 //     let sampleListing = new Listing({
