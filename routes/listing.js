@@ -5,7 +5,7 @@ const router = express.Router();
 const Listing = require("../models/listing.js");
 const wrapAsync = require("../utils/wrapAsync.js");
 const ExpressError = require("../utils/ExpressError.js");
-const { listingSchema, reviewSchema } = require("../schema.js");
+const { listingSchema } = require("../schema.js");
 
 
 //middleware for validating listing data using Joi schema
@@ -93,3 +93,22 @@ router.delete("/:id", wrapAsync(async (req, res) => {
 
 
 module.exports = router;
+
+
+
+// app.get("/testListing", (req, res) => {
+//     let sampleListing = new Listing({
+//         title: "New Villa",
+//         description: "By the Beach",
+//         price: 1200,
+//         location: "Panambur, Mangaluru",
+//         country: "India",
+//     });
+
+//     // sampleListing.save().then((res) => {
+//     //     console.log("saved");
+//     // }).catch(err => {
+//     //     console.log(err);
+//     // });
+//     res.send("successful testing")
+// });
