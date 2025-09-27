@@ -9,7 +9,9 @@ const wrapAsync = require("./utils/wrapAsync.js");
 const ExpressError = require("./utils/ExpressError.js");
 const { listingSchema, reviewSchema } = require("./schema.js");
 const Review = require("./models/review.js");
-const { reverse } = require("dns");
+
+const listings = require("./routes/listing.js");
+
 
 const MONGO_URL = "mongodb://127.0.0.1:27017/stayin";
 
@@ -41,15 +43,7 @@ app.get("/", (req, res) => {
 });
 
 
-const validateListing = (req, res, next) => {
-    let { error } = listingSchema.validate(req.body);
-    if (error) {
-        let errMsg = error.details.map((el) => el.message).join(",");
-        throw new ExpressError(400, errMsg);
-    } else {
-        next();
-    }
-}
+//here middleware for validating review data using Joi schema and the listings routes were written which are now moved to routes/listing.js file.
 
 const validateReview = (req, res, next) => {
     let { error } = reviewSchema.validate(req.body);
@@ -62,76 +56,7 @@ const validateReview = (req, res, next) => {
 }
 
 
-//Index Route
-app.get("/listings", wrapAsync(async (req, res) => {
-    const allListings = await Listing.find({});
-    res.render("listings/index.ejs", { allListings });
-}));
-
-//New Route
-app.get("/listings/new", (req, res) => {
-    res.render("listings/new.ejs");
-});
-
-//Show Route
-app.get("/listings/:id", wrapAsync(async (req, res) => {
-    let { id } = req.params;
-    let listing = await Listing.findById(id).populate("reviews");                                      // previously(before reviews) : let listing = await Listing.findById(id);
-    res.render("listings/show.ejs", { listing });
-}));
- 
-//Create Route (Post)
-app.post("/listings", validateListing, wrapAsync(async (req, res, next) => {
-    // // let { title, description, image, price, country, location } = req.body;
-    // // in the html form's name attributes of the fields, we can send the key-value pair tied to an object in the form object[key] in the name attribute which will be in the body of request as an object, making the accessing/destructuring syntax here easier.
-    // // let listing = req.body.listing;
-    // if (!req.body.listing) {
-    //     throw new ExpressError(400, "Send valid data for Listing");      // 400 - Bad Request i.e., client didn't the request correctly
-    // }                                                           // if the user doesn't use the form, or maybe tester uses directly API's to test and sends an empty body request, then the req.body won't have any object called listing to save. This would be a bad reques, hence throwing a new custom error instead of default.
-    // const newListing = new Listing(req.body.listing);
-    // await newListing.save();
-    // res.redirect("/listings");
-    // // try{...
-    // // } catch (err) {
-    // //     next(err);
-    // // }
-
-
-    // //       after using Joi for server-side validation of schema:
-    // let result = listingSchema.validate(req.body);              // sending into listingSchema whether to check if the req.body is being successfully validated by the Joi schema we have setup
-    // //console.log(result);
-    // if (result.error) {                                     // since the joi returns an error and value key, we can access error if it exists for clean error messages.
-    //     throw new ExpressError(400, result.error);
-    // }
-    //     now converting the above joi related code into a middleware by converting it into a function
-    const newListing = new Listing(req.body.listing);
-    await newListing.save();
-    res.redirect("/listings");
-}));
-
-//Edit Route
-app.get("/listings/:id/edit", wrapAsync(async (req, res) => {
-    let { id } = req.params;
-    let oldListing = await Listing.findById(id);
-    res.render("listings/edit.ejs", { oldListing });
-}));
-
-//Update Route
-app.put("/listings/:id", validateListing, wrapAsync(async (req, res) => {
-    // if (!req.body.listing) {
-    //     throw new ExpressError(400, "Send valid data for Listing");
-    // }
-    let { id } = req.params;
-    await Listing.findByIdAndUpdate(id, { ...req.body.listing });
-    res.redirect(`/listings/${id}`);                  // redirecting to show route instead of index
-}));
-
-//Delete Route
-app.delete("/listings/:id", wrapAsync(async (req, res) => {
-    let { id } = req.params;
-    await Listing.findByIdAndDelete(id);
-    res.redirect("/listings");
-}));
+app.use("/listings", listings);
 
 
 //Reviews
