@@ -22,7 +22,10 @@
      <%- include("../includes/navbar.ejs") %>
 
     <!-- to change body -->
-    <div class="container"><%- body %></div>
+    <div class="container">
+        <%- include("../includes/flash.ejs") %>
+        <%- body %>
+    </div>
     <!-- importing body here -->
      <br /><br />
 

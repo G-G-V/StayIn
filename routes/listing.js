@@ -35,6 +35,19 @@ router.get("/new", (req, res) => {                            // now here the ro
 router.get("/:id", wrapAsync(async (req, res) => {
     let { id } = req.params;
     let listing = await Listing.findById(id).populate("reviews");                                      // previously(before reviews) : let listing = await Listing.findById(id);
+    if (!listing) {
+        req.flash("error", "Listing does not exist!");
+        return res.redirect("/listings");                                   
+    }
+    // // alt:  throwing an error and directing to the error page with a status code
+    // if (!listing) {
+    //     throw new ExpressError(404, "Listing does not exist!");
+    // }
+    // // alt 1: 
+    // if (!listing) {
+    //     req.flash("error", "Listing does not exist");
+    //     return next(new ExpressError(404, "Listing does not exist"));
+    // }
     res.render("listings/show.ejs", { listing });
 }));
  
@@ -64,6 +77,7 @@ router.post("/", validateListing, wrapAsync(async (req, res, next) => {
     //     now converting the above joi related code into a middleware by converting it into a function
     const newListing = new Listing(req.body.listing);
     await newListing.save();
+    req.flash("success", "New Listing Created!");                // before redirecting,... success local variable is then used in index page of listings
     res.redirect("/listings");
 }));
 
@@ -71,6 +85,10 @@ router.post("/", validateListing, wrapAsync(async (req, res, next) => {
 router.get("/:id/edit", wrapAsync(async (req, res) => {
     let { id } = req.params;
     let oldListing = await Listing.findById(id);
+    if (!oldListing) {
+        req.flash("error", "Listing does not exist!");
+        return res.redirect("/listings");
+    }
     res.render("listings/edit.ejs", { oldListing });
 }));
 
@@ -81,6 +99,7 @@ router.put("/:id", validateListing, wrapAsync(async (req, res) => {
     // }
     let { id } = req.params;
     await Listing.findByIdAndUpdate(id, { ...req.body.listing });
+    req.flash("success", "Listing Updated!");
     res.redirect(`/listings/${id}`);                  // redirecting to show route instead of index
 }));
 
@@ -88,6 +107,7 @@ router.put("/:id", validateListing, wrapAsync(async (req, res) => {
 router.delete("/:id", wrapAsync(async (req, res) => {
     let { id } = req.params;
     await Listing.findByIdAndDelete(id);
+    req.flash("success", "Listing Deleted!");
     res.redirect("/listings");
 }));
 

@@ -33,6 +33,8 @@ router.post("/", validateReview, wrapAsync(async(req, res) => {                 
     await newReview.save();
     await listing.save();
 
+    req.flash("success", "New Review Created!");
+
     res.redirect(`/listings/${listing._id}`); 
 }));                                                           // In Server-side validation, the hoppscotch body is sent empty and we get the message on screen(html section) as ' "review" is required ', so the body is empty and hence the error. But if we send the body as { "review" : {} }, then we get the message as ' "rating" is required, "comment" is required ' since the review object is present but the keys inside it are missing. So the validation is working perfectly fine. And when urlencoded form is sent from the form through hoppscotch, the req.body has the review object with the keys and values. So, we will have to send like this in hoppscotch to test the review post route: review[rating] : 4 and review[comment] : "Great Place!" in the body section of hoppscotch with x-www-form-urlencoded selected.
 
@@ -42,6 +44,8 @@ router.delete("/:reviewId", wrapAsync(async (req, res) => {
 
     await Listing.findByIdAndUpdate(id, { $pull: { reviews: reviewId } });         // $pull operator removes from an existing array all instances of a value or values that match a specified condition. Here we are removing the reviewId from the reviews array in the listing document.
     await Review.findByIdAndDelete(reviewId);
+
+    req.flash("success", "Review Deleted!");
     
     res.redirect(`/listings/${id}`);
 }));
