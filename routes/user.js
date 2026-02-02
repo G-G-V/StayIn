@@ -3,6 +3,7 @@ const wrapAsync = require("../utils/wrapAsync");
 const router = express.Router();
 const User = require("../models/user.js");
 const passport = require("passport");
+const { isLoggedIn } = require("../middleware.js");
 
 router.get("/signup", (req, res) => {
     res.render(`users/signup.ejs`);
@@ -14,8 +15,17 @@ router.post("/signup", wrapAsync(async (req, res) => {
         const newUser = new User({username, email});
         const registeredUser = await User.register(newUser, password);
         // console.log(registeredUser);
-        req.flash("success", "User registered. Welcome to StayIn!");
-        res.redirect("/listings");
+        // now to complete the flow of logging in right after signup, we can use the req.login() function, it stores the user in the req.user object
+        req.login(registeredUser, (err) => {
+            if (err) {
+                return next(err);
+            }
+            req.flash("success", "User registered. Welcome to StayIn!");
+            res.redirect("/listings");
+        })
+        //
+        // req.flash("success", "User registered. Welcome to StayIn!");
+        // res.redirect("/listings");
     } catch(e) {
         req.flash("error", e.message);
         res.redirect("/signup");
@@ -31,7 +41,7 @@ router.post(
     passport.authenticate("local", { 
         failureRedirect: "/login", 
         failureFlash: true 
-    }), 
+    }),                                                              // (strategy, {options})      // this method automatically invokes req.login()
     wrapAsync(async (req, res) => {
         // try {
 
@@ -43,5 +53,15 @@ router.post(
         res.redirect("/listings");
     })
 );
+
+router.get("/logout", isLoggedIn, (req, res, next) => {
+    req.logout((err) => {                                   // it takes a callback in itself, write what needs to happen immediately next
+        if(err) {
+            return next(err);
+        }
+        req.flash("success", "You are logged out!")
+        res.redirect("/listings");
+    });
+});
 
 module.exports = router;

@@ -6,6 +6,7 @@ const Listing = require("../models/listing.js");
 const wrapAsync = require("../utils/wrapAsync.js");
 const ExpressError = require("../utils/ExpressError.js");
 const { listingSchema } = require("../schema.js");
+const { isLoggedIn } = require("../middleware.js");
 
 
 //middleware for validating listing data using Joi schema
@@ -27,7 +28,12 @@ router.get("/", wrapAsync(async (req, res) => {               // replaced app wi
 }));
 
 //New Route
-router.get("/new", (req, res) => {                            // now here the routes can just be / , /new etc. instead of '/listings', '/listings/new', or '/listings/:id', as in app.js we have routed all /listings routes to this file, so here it is just / or /new adn so on.
+router.get("/new", isLoggedIn, (req, res) => {                            // now here the routes can just be / , /new etc. instead of '/listings', '/listings/new', or '/listings/:id', as in app.js we have routed all /listings routes to this file, so here it is just / or /new adn so on.
+    // console.log(req.user);                           // can check the user details, before and after authenticated.
+    // if(!req.isAuthenticated()) {
+    //     req.flash("error", "You must be logged in to create a listing!");
+    //     return res.redirect("/login");
+    // }                                       // transferred to middleware.js, to reuse in other routes
     res.render("listings/new.ejs");
 });
 
@@ -82,7 +88,7 @@ router.post("/", validateListing, wrapAsync(async (req, res, next) => {
 }));
 
 //Edit Route
-router.get("/:id/edit", wrapAsync(async (req, res) => {
+router.get("/:id/edit", isLoggedIn, wrapAsync(async (req, res) => {
     let { id } = req.params;
     let oldListing = await Listing.findById(id);
     if (!oldListing) {
@@ -93,7 +99,7 @@ router.get("/:id/edit", wrapAsync(async (req, res) => {
 }));
 
 //Update Route
-router.put("/:id", validateListing, wrapAsync(async (req, res) => {
+router.put("/:id", isLoggedIn, validateListing, wrapAsync(async (req, res) => {
     // if (!req.body.listing) {
     //     throw new ExpressError(400, "Send valid data for Listing");
     // }
@@ -104,7 +110,7 @@ router.put("/:id", validateListing, wrapAsync(async (req, res) => {
 }));
 
 //Delete Route
-router.delete("/:id", wrapAsync(async (req, res) => {
+router.delete("/:id", isLoggedIn, wrapAsync(async (req, res) => {
     let { id } = req.params;
     await Listing.findByIdAndDelete(id);
     req.flash("success", "Listing Deleted!");
