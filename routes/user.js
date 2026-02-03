@@ -3,7 +3,7 @@ const wrapAsync = require("../utils/wrapAsync");
 const router = express.Router();
 const User = require("../models/user.js");
 const passport = require("passport");
-const { isLoggedIn } = require("../middleware.js");
+const { isLoggedIn, saveRedirectUrl } = require("../middleware.js");
 
 router.get("/signup", (req, res) => {
     res.render(`users/signup.ejs`);
@@ -38,6 +38,7 @@ router.get("/login", (req, res) => {
 
 router.post(
     "/login", 
+    saveRedirectUrl,                               // saving jusst before passport takes over for authentication
     passport.authenticate("local", { 
         failureRedirect: "/login", 
         failureFlash: true 
@@ -50,7 +51,12 @@ router.post(
         //     res.redirect("/login");
         // }
         req.flash("success", "Welcome back to StayIn!");
-        res.redirect("/listings");
+        // // // res.redirect("/listings");
+        // // res.redirect(req.session.redirectUrl);
+        // res.redirect(res.locals.redirectUrl);            // check for *1  isLoggedIn middleware for info
+        // *2:
+        let redirectUrl = res.locals.redirectUrl || "/listings";
+        res.redirect(redirectUrl);
     })
 );
 
