@@ -9,9 +9,15 @@ const ejsMate = require("ejs-mate");
 const ExpressError = require("./utils/ExpressError.js");
 // const { listingSchema, reviewSchema } = require("./schema.js");
 // const Review = require("./models/review.js");                                    // these commented lines are not required here as the routes have been moved to separate files for better code management and modularity.
+const session = require("express-session");
+const flash = require("connect-flash");
+const passport = require("passport");
+const LocalStrategy = require("passport-local");
+const User = require("./models/user.js");
 
-const listings = require("./routes/listing.js");
-const reviews = require("./routes/review.js");
+const listingRouter = require("./routes/listing.js");
+const reviewRouter = require("./routes/review.js");
+const userRouter = require("./routes/user.js");
 
 
 const MONGO_URL = "mongodb://127.0.0.1:27017/stayin";
@@ -39,18 +45,62 @@ app.use(methodOverride("_method"));
 
 app.engine("ejs", ejsMate);
 
+
+const sessionOptions = {
+    secret: "supersecretcode",         // not good, probably should be done with env variables..
+    resave: false,
+    saveUninitialized: true,
+    cookie: {
+        expires: Date.now() + 7 * 24 * 60 * 60 * 1000,
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+        httpOnly: true,
+    }
+};
+
 app.get("/", (req, res) => {
     res.send("This is root.");
 });
+
+app.use(session(sessionOptions));
+app.use(flash());
+
+app.use(passport.initialize());
+app.use(passport.session());
+passport.use(new LocalStrategy(User.authenticate()));
+
+passport.serializeUser(User.serializeUser());
+passport.deserializeUser(User.deserializeUser());
+
+app.use((req, res, next) => {
+    res.locals.success = req.flash("success");
+    res.locals.error = req.flash("error");
+    // console.log(res.locals.success);
+    res.locals.currUser = req.user;
+    next();
+});
+
+
+// app.get("/demouser", async (req, res) => {
+//     let fakeUser = new User({
+//         email: "student@gmail.com",
+//         username: "dsce-student"
+//     });
+
+//     let registeredUser = await User.register(fakeUser, "thisispassword");         // register() is another one of the static methods added to the schema.
+//     res.send(registeredUser);
+// });
+
 
 
 //here middleware for validating listings and review data using Joi schema and the listings and review routes were written which are now moved to routes/listing.js file and routes/review.js file respectively for better code management and modularity.
 // app.use("/listings", listingRoutes);      // previous way of routing the listing routes
 // app.use("/listings/:id/reviews", reviewRoutes);   // previous way of routing the review routes
 
-app.use("/listings", listings);
+app.use("/listings", listingRouter);
 
-app.use("/listings/:id/reviews", reviews);
+app.use("/listings/:id/reviews", reviewRouter);
+
+app.use("/", userRouter);
 
 
 app.all("*some", (req, res, next) => {                                 // 404 Route - should be at the end after all other routes
