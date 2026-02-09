@@ -18,6 +18,7 @@ async function main() {
 
 const initDB = async () => {
     await Listing.deleteMany({});      // cleansing the db for old residual data
+    initData.data = initData.data.map((obj) => ({...obj, owner: '697e066e269f6d6b3ac5c9ca'}));            // map is an array function, it doesn't change in the array, it ends up creating a new array.
     await Listing.insertMany(initData.data);        // the way we have exported in the data file, herewe treat it like an object.
     console.log("data was initialized");
 }

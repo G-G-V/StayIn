@@ -1,3 +1,9 @@
+const Listing = require("./models/listing.js");
+
+const ExpressError = require("./utils/ExpressError.js");
+const { listingSchema, reviewSchema } = require("./schema.js");
+
+
 module.exports.isLoggedIn = (req, res, next) => {
     // console.log(req.user);
     //
@@ -31,3 +37,38 @@ module.exports.saveRedirectUrl = (req, res, next) => {
     // }
     next();
 }                             // pass this just before passport authenticates
+
+
+module.exports.isOwner = async (req, res, next) => {
+    let { id } = req.params;
+    let listing = await Listing.findById(id);
+    if (!listing.owner._id.equals(res.locals.currUser._id)) {
+        req.flash("error", `You do not have the permission to edit or delete the listing ${listing.title}.`);
+        return res.redirect(`/listings/${id}`);
+        // let redirectUrl = res.locals.redirectUrl || "/listings";
+        // return res.redirect(redirectUrl);
+    }
+    next();
+}
+
+//middleware for validating listing data using Joi schema
+module.exports.validateListing = (req, res, next) => {
+    let { error } = listingSchema.validate(req.body);
+    if (error) {
+        let errMsg = error.details.map((el) => el.message).join(",");
+        throw new ExpressError(400, errMsg);
+    } else {
+        next();
+    }
+}
+
+//middleware for validating review data using Joi schema
+module.exports.validateReview = (req, res, next) => {
+    let { error } = reviewSchema.validate(req.body);
+    if (error) {
+        let errMsg = error.details.map((el) => el.message).join(",");
+        throw new ExpressError(400, errMsg);
+    } else {
+        next();
+    }
+}
