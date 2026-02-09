@@ -8,7 +8,7 @@ const Review = require("../models/review.js");
 const wrapAsync = require("../utils/wrapAsync.js");
 // const ExpressError = require("../utils/ExpressError.js");
 // const { reviewSchema } = require("../schema.js");           // moved with middleware func
-const { validateReview } = require("../middleware.js");
+const { validateReview, isLoggedIn, isReviewAuthor } = require("../middleware.js");
 
 
 // //middleware for validating review data using Joi schema
@@ -24,11 +24,13 @@ const { validateReview } = require("../middleware.js");
 
 
 //Post Review Route
-router.post("/", validateReview, wrapAsync(async(req, res) => {                 // In the app.js file, we have routed all the /listings/:id/reviews routes to this file, so here it is just / and so on instead of /listings/:id/reviews and similarly for other routes.
+router.post("/", isLoggedIn, validateReview, wrapAsync(async(req, res) => {                 // In the app.js file, we have routed all the /listings/:id/reviews routes to this file, so here it is just / and so on instead of /listings/:id/reviews and similarly for other routes.
     // console.log(req.params.id, req.body);              // testing if we can access the :id param from the parent router (/listings/:id/reviews) and also the body of the request sent from hoppscotch. It works perfectly fine.
     let listing = await Listing.findById(req.params.id);
     let newReview = new Review(req.body.review);
-
+    //
+    newReview.author = req.user._id;
+    //    just before pushing and saving into the db.
     listing.reviews.push(newReview);
 
     await newReview.save();
@@ -40,7 +42,7 @@ router.post("/", validateReview, wrapAsync(async(req, res) => {                 
 }));                                                           // In Server-side validation, the hoppscotch body is sent empty and we get the message on screen(html section) as ' "review" is required ', so the body is empty and hence the error. But if we send the body as { "review" : {} }, then we get the message as ' "rating" is required, "comment" is required ' since the review object is present but the keys inside it are missing. So the validation is working perfectly fine. And when urlencoded form is sent from the form through hoppscotch, the req.body has the review object with the keys and values. So, we will have to send like this in hoppscotch to test the review post route: review[rating] : 4 and review[comment] : "Great Place!" in the body section of hoppscotch with x-www-form-urlencoded selected.
 
 //Delete Review Route
-router.delete("/:reviewId", wrapAsync(async (req, res) => {
+router.delete("/:reviewId", isLoggedIn, isReviewAuthor, wrapAsync(async (req, res) => {
     let { id, reviewId } = req.params;
 
     await Listing.findByIdAndUpdate(id, { $pull: { reviews: reviewId } });         // $pull operator removes from an existing array all instances of a value or values that match a specified condition. Here we are removing the reviewId from the reviews array in the listing document.

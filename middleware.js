@@ -3,6 +3,7 @@ const Listing = require("./models/listing.js");
 const ExpressError = require("./utils/ExpressError.js");
 const { listingSchema, reviewSchema } = require("./schema.js");
 
+const Review = require("./models/review.js");
 
 module.exports.isLoggedIn = (req, res, next) => {
     // console.log(req.user);
@@ -71,4 +72,14 @@ module.exports.validateReview = (req, res, next) => {
     } else {
         next();
     }
+}
+
+module.exports.isReviewAuthor = async (req, res, next) => {
+    let { id, reviewId } = req.params;
+    let review = await Review.findById(reviewId).populate("author");
+    if (!review.author._id.equals(res.locals.currUser._id)) {
+        req.flash("error", `You do not have the permission to edit or delete this Review.`);
+        return res.redirect(`/listings/${id}`);
+    }
+    next();
 }

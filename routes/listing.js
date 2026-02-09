@@ -40,7 +40,17 @@ router.get("/new", isLoggedIn, (req, res) => {                            // now
 //Show Route
 router.get("/:id", wrapAsync(async (req, res) => {
     let { id } = req.params;
-    let listing = await Listing.findById(id).populate("reviews").populate("owner");                                      // previously(before reviews) : let listing = await Listing.findById(id);            // also chain the owner field to be populated
+    // let listing = await Listing.findById(id).populate("reviews").populate("owner");                                  // previously(before reviews) : let listing = await Listing.findById(id);            // also chain the owner field to be populated
+    // here, above populate chaining was used, but to also show the author names of reviews, we will have to populate author in reviews too, i.e., nested populate.
+    let listing = await Listing.findById(id)
+        .populate({
+            path: "reviews",
+            populate: {
+                path: "author"
+            }
+        })
+        .populate("owner");
+    //
     if (!listing) {
         req.flash("error", "Listing does not exist!");
         return res.redirect("/listings");
